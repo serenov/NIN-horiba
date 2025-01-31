@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>XML to CSV Converter</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+            text-align: center;
+        }
+        textarea {
+            width: 80%;
+            height: 150px;
+            margin-bottom: 10px;
+            padding: 10px;
+            font-size: 14px;
+        }
+        button {
+            padding: 10px 15px;
+            font-size: 16px;
+            margin: 5px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+        }
+        .accumulate {
+            background-color: #28a745;
+            color: white;
+        }
+        .export {
+            background-color: #007bff;
+            color: white;
+        }
+        .clear {
+            background-color: #dc3545;
+            color: white;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>XML to CSV Converter (Persistent Storage)</h2>
+    <textarea id="xmlInput" placeholder="Paste XML here..."></textarea><br>
+    <button class="accumulate" onclick="accumulateXML()">Accumulate</button>
+    <button class="export" onclick="exportCSV()">Export CSV</button>
+    <button class="clear" onclick="clearData()">Clear All Data</button>
+
+    <script>
+        // Load data from localStorage if available
+        let accumulatedData = JSON.parse(localStorage.getItem("xmlData")) || [];
+
+        function accumulateXML() {
+            const xmlText = document.getElementById("xmlInput").value.trim();
+            if (!xmlText) {
+                alert("Please enter XML content!");
+                return;
+            }
+
+            // Parse XML
+            const parser = new DOMParser();
+            const xmlDoc = parser.parseFromString(xmlText, "text/xml");
+
+            try {
+                // Extract FIELD_SID_SAMPLE_ID
+                const FIELD_SID_SAMPLE_ID = xmlDoc.querySelector('[n="FIELD_SID_SAMPLE_ID"]').textContent.trim();
+
+                // Find all elements with attribute t="SampleParameterResult"
+                const elements = xmlDoc.querySelectorAll('[t="SampleParameterResult"]');
+
+                // Initialize sampleFields with the extracted FIELD_SID_SAMPLE_ID
+                const sampleFields = { FIELD_SID_SAMPLE_ID };
+
+                elements.forEach(el => {
+                    const idField = el.querySelector('[n="Id"]');
+                    const keyname = idField ? idField.textContent.trim() : "NOT FOUND";
+
+                    const value = el.querySelector('[n="Value"]')?.textContent.trim();
+
+                    sampleFields[keyname] = value;
+                });
+
+                // Store in array and localStorage
+                accumulatedData.push(sampleFields);
+                localStorage.setItem("xmlData", JSON.stringify(accumulatedData));
+
+                // Clear the input field
+                document.getElementById("xmlInput").value = "";
+                alert("XML data accumulated!");
+            } catch (error) {
+                alert("Error parsing XML! Check your input.");
+            }
+        }
+
+        function exportCSV() {
+            if (accumulatedData.length === 0) {
+                alert("No data to export!");
+                return;
+            }
+
+            const headers = Object.keys(accumulatedData[0]);
+
+            let csvContent = headers.join(",") + "\n";
+
+            accumulatedData.forEach(row => {
+                csvContent += Object.values(row).join(",") + "\n";
+            });
+
+            // Create and trigger CSV file download
+            const blob = new Blob([csvContent], { type: "text/csv" });
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = "exported_data.csv";
+            a.click();
+        }
+
+        function clearData() {
+            accumulatedData = [];
+            localStorage.removeItem("xmlData"); // Remove stored data
+            alert("All accumulated data cleared!");
+        }
+    </script>
+
+</body>
+</html>
