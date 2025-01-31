@@ -66,12 +66,13 @@
             try {
                 // Extract FIELD_SID_SAMPLE_ID
                 const FIELD_SID_SAMPLE_ID = xmlDoc.querySelector('[n="FIELD_SID_SAMPLE_ID"]').textContent.trim();
+                const ANALYSIS_DATE = xmlDoc.querySelector('[n="ANALYSIS_DATE"]').textContent.trim();
 
                 // Find all elements with attribute t="SampleParameterResult"
                 const elements = xmlDoc.querySelectorAll('[t="SampleParameterResult"]');
 
                 // Initialize sampleFields with the extracted FIELD_SID_SAMPLE_ID
-                const sampleFields = { FIELD_SID_SAMPLE_ID };
+                const sampleFields = { FIELD_SID_SAMPLE_ID, ANALYSIS_DATE };
 
                 elements.forEach(el => {
                     const idField = el.querySelector('[n="Id"]');
